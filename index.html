@@ -402,6 +402,39 @@
                 clickText.remove();
             }, 1000);
         }
+
+
+
+
+        let data = localStorage.getItem('gameData');
+        if (data) {
+            data = JSON.parse(data);
+        } else {
+            data = {
+                score: 0,
+                clicks: 0,
+                //...
+            };
+        }
+
+        window.Telegram.WebApp.sendData('gameData', data);
+
+        function updateData() {
+            localStorage.setItem('gameData', JSON.stringify(data));
+
+            window.Telegram.WebApp.sendData('gameData', data);
+        }
+
+        document.addEventListener('click', function (e) {
+
+            data.score++;
+            updateData();
+        });
+
+
+
+        
+
     </script>
 </body>
 </html>
