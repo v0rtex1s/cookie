@@ -6,7 +6,8 @@
     <title>Cookie Clicker</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <style>
+    <link rel="stylesheet" href="styles.css">
+	<style>
         body {
             font-family: 'Roboto', sans-serif;
             background: linear-gradient(135deg, #3b3b3b, #1c1c1c);
@@ -73,16 +74,17 @@
             background: #555;
             transform: scale(1.05);
         }
-
+        
         #cookie {
-            width: 300px; /* Увеличиваем размер печеньки */
-            webkit-tap-highlight-color: transparent;
+            width: 300px;
+            user-select: none; /* Отключение выделения */
+            -webkit-tap-highlight-color: transparent; /* Убрать подсветку при нажатии */
             cursor: pointer;
             transition: transform 0.1s ease;
         }
 
-        #cookie:hover {
-            transform: scale(1.1);
+        #cookie:active {
+            transform: scale(1.1); /* Анимация клика */
         }
 
         #score,
@@ -149,7 +151,7 @@
             position: absolute;
             animation: fadeOut 1s forwards;
             pointer-events: none;
-            font-size: 40px; /* Увеличиваем размер анимации текста */
+            font-size: 40px;
             color: #ff5722;
             font-weight: bold;
         }
@@ -206,7 +208,7 @@
     </header>
     <div id="main" class="tab-content active">
         <p>Кликай на печеньку и зарабатывай очки! Узнай свою прибыль в час.</p>
-        <img id="cookie" src="img\chad_68c580aff44346a6b92cc218c3e27e33_4-Photoroom.png" alt="Печенька">
+        <img id="cookie" src="img/chad_68c580aff44346a6b92cc218c3e27e33_4-Photoroom.png" alt="Печенька">
         <div id="score">Очки: 0</div>
         <div id="cps">Прибыль в час: 0</div>
         <button class="spin-button" onclick="spinWheel()">Игра: Барабан</button>
@@ -269,8 +271,7 @@
     <script>
         let score = 0;
         let clicks = 1;
-        let hourlyRevenue = 0; // Начальная прибыль в час
-        const clickRevenue = clicks;
+        let hourlyRevenue = 0;
         const cookie = document.getElementById('cookie');
         const scoreElement = document.getElementById('score');
         const cpsElement = document.getElementById('cps');
@@ -282,9 +283,27 @@
         let goldenCookieLevel = 1;
         let goldenCookiePrice = 400;
 
+        window.addEventListener("load", () => {
+            loadProgress(); // Загрузка сохраненного прогресса
+        });
+
+        window.addEventListener("beforeunload", () => {
+            saveProgress(); // Сохранение прогресса перед выходом
+        });
+
+        // Поддержка многократных кликов (PC и мобильные устройства)
         cookie.addEventListener('click', function (e) {
             score += clicks;
             showClick(e);
+            updateScores();
+        });
+
+        cookie.addEventListener('touchstart', function (e) {
+            e.preventDefault(); // Предотвращает выделение
+            for (let i = 0; i < e.touches.length; i++) {
+                score += clicks;
+                showClick(e.touches[i]);
+            }
             updateScores();
         });
 
@@ -385,56 +404,46 @@
         function updateScores() {
             scoreElement.innerText = 'Очки: ' + score;
             currentCookiesElement.innerText = 'У вас очков: ' + score;
-            cpsElement.innerText = 'Прибыль в час: ' + hourlyRevenue.toFixed(0); // Приводим к целому числу
+            cpsElement.innerText = 'Прибыль в час: ' + hourlyRevenue.toFixed(0);
             hourlyRevenueElement.innerText = hourlyRevenue.toFixed(0);
-            clickRevenueElement.innerText = clicks; // Обновляем количество кликов как прибыль с клика
+            clickRevenueElement.innerText = clicks;
         }
 
         function showClick(event) {
             const clickText = document.createElement('div');
             clickText.className = 'click-animation';
             clickText.innerText = '+' + clicks;
-            clickText.style.left = (event.clientX - 20) + 'px'; // Центруем текст
-            clickText.style.top = (event.clientY - 40) + 'px'; // Увеличиваем высоту
+            const x = event.clientX || event.touches[0].clientX;
+            const y = event.clientY || event.touches[0].clientY;
+            clickText.style.left = (x - 20) + 'px';
+            clickText.style.top = (y - 40) + 'px';
             document.body.appendChild(clickText);
 
             setTimeout(() => {
                 clickText.remove();
             }, 1000);
         }
-
-
-
-
-        let data = localStorage.getItem('gameData');
-        if (data) {
-            data = JSON.parse(data);
-        } else {
-            data = {
-                score: 0,
-                clicks: 0,
-                //...
-            };
-        }
-
-        window.Telegram.WebApp.sendData('gameData', data);
-
-        function updateData() {
-            localStorage.setItem('gameData', JSON.stringify(data));
-
-            window.Telegram.WebApp.sendData('gameData', data);
-        }
-
-        document.addEventListener('click', function (e) {
-
-            data.score++;
-            updateData();
-        });
-
-
-
         
+        function saveProgress() {
+            localStorage.setItem('score', score);
+            localStorage.setItem('clicks', clicks);
+            localStorage.setItem('hourlyRevenue', hourlyRevenue);
+            localStorage.setItem('lastSpinTime', lastSpinTime);
+            localStorage.setItem('goldenCookieLevel', goldenCookieLevel);
+            localStorage.setItem('goldenCookiePrice', goldenCookiePrice);
+        }
 
+        function loadProgress() {
+            if (localStorage.getItem('score') !== null) {
+                score = parseInt(localStorage.getItem('score'));
+                clicks = parseInt(localStorage.getItem('clicks'));
+                hourlyRevenue = parseInt(localStorage.getItem('hourlyRevenue'));
+                lastSpinTime = parseInt(localStorage.getItem('lastSpinTime'));
+                goldenCookieLevel = parseInt(localStorage.getItem('goldenCookieLevel'));
+                goldenCookiePrice = parseFloat(localStorage.getItem('goldenCookiePrice'));
+                updateScores();
+                updateSkills();
+            }
+        }
     </script>
 </body>
-</html>
