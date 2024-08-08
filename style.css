@@ -1,0 +1,11 @@
+#cookie {
+    width: 300px;
+    user-select: none; /* Отключение выделения */
+    -webkit-tap-highlight-color: transparent; /* Убрать подсветку при нажатии */
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+#cookie:active {
+    transform: scale(1.1); /* Анимация клика */
+}
